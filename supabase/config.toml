@@ -1,0 +1,132 @@
+
+[functions.send-contact-email]
+enabled = true
+verify_jwt = false
+import_map = "./functions/send-contact-email/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/send-contact-email/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/send-contact-email/*.html" ]
+
+[functions.make-webhook]
+enabled = true
+verify_jwt = true
+import_map = "./functions/make-webhook/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/make-webhook/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/make-webhook/*.html" ]
+
+[functions.contact-to-sheets]
+enabled = true
+verify_jwt = true
+import_map = "./functions/contact-to-sheets/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/contact-to-sheets/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/contact-to-sheets/*.html" ]
+
+[functions.document-download]
+enabled = true
+verify_jwt = true
+import_map = "./functions/document-download/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/document-download/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/document-download/*.html" ]
+
+[functions.webhook-to-n8n]
+enabled = true
+verify_jwt = true
+import_map = "./functions/webhook-to-n8n/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/webhook-to-n8n/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/webhook-to-n8n/*.html" ]
+
+[functions.upload-to-youtube]
+enabled = true
+verify_jwt = true
+import_map = "./functions/upload-to-youtube/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/upload-to-youtube/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/upload-to-youtube/*.html" ]
+
+[functions.youtube-auth]
+enabled = true
+verify_jwt = true
+import_map = "./functions/youtube-auth/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/youtube-auth/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/youtube-auth/*.html" ]
+
+[functions.youtube-upload]
+enabled = true
+verify_jwt = true
+import_map = "./functions/youtube-upload/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/youtube-upload/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/youtube-upload/*.html" ]
+
+[functions.youtube-auth-callback]
+enabled = true
+verify_jwt = true
+import_map = "./functions/youtube-auth-callback/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/youtube-auth-callback/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/youtube-auth-callback/*.html" ]
+
+[functions.refresh-token]
+enabled = true
+verify_jwt = true
+import_map = "./functions/refresh-token/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/refresh-token/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/refresh-token/*.html" ]
+
+[functions.upload-youtube]
+enabled = true
+verify_jwt = true
+import_map = "./functions/upload-youtube/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/upload-youtube/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/upload-youtube/*.html" ]
+
+[functions.youtube-metadata]
+enabled = true
+verify_jwt = true
+import_map = "./functions/youtube-metadata/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/youtube-metadata/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/youtube-metadata/*.html" ]

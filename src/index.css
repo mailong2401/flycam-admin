@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 215 25% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 215 25% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 25% 15%;
+
+    --primary: 205 85% 50%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 15% 96%;
+    --secondary-foreground: 215 25% 15%;
+
+    --muted: 210 15% 96%;
+    --muted-foreground: 15 5% 18%;
+
+    --accent: 25 95% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 205 85% 50%;
+
+    --radius: 0.75rem;
+    
+    /* Custom drone service colors */
+    --sky-blue: 205 85% 50%;
+    --sky-blue-light: 205 85% 65%;
+    --sky-blue-dark: 205 85% 35%;
+    --charcoal: 215 25% 15%;
+    --charcoal-light: 215 15% 30%;
+    --orange-accent: 25 95% 55%;
+    --orange-accent-hover: 25 95% 45%;
+    /* NEW COLORS - Thêm các màu của bạn vào đây */
+    --pure-black: 0 0% 0%;           /* #000000 */
+    --warm-gray: 15 5% 18%;          /* #312e2d */ 
+    --vibrant-red: 0 75% 48%;        /* #d62323 */
+    --light-gray: 0 0% 95%;          /* #f2f2f2 */
+    --pure-white: 0 0% 100%;         /* #ffffff */
+    /* Gradients */
+    --gradient-sky: linear-gradient(135deg, hsl(205 85% 50%) 0%, hsl(205 85% 65%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(215 25% 15%) 0%, hsl(215 15% 30%) 100%);
+    --gradient-overlay: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.6) 100%);
+    
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
+    --shadow-sky: 0 8px 24px rgba(41, 151, 220, 0.25);
+    
+    /* Transitions */
+    --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 215 25% 10%;
+    --foreground: 0 0% 98%;
+
+    --card: 215 25% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 215 25% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 205 85% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 215 20% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 215 20% 18%;
+    --muted-foreground: 0 0% 95%;
+
+    --accent: 25 95% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 62% 40%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 215 20% 20%;
+    --input: 215 20% 20%;
+    --ring: 205 85% 55%;
+    
+    --charcoal: 0 0% 98%;
+    --charcoal-light: 215 15% 80%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+/* Admin specific styles */
+.admin-layout {
+  min-height: 100vh;
+}
+
+/* Smooth transitions */
+.sidebar-transition {
+  transition: transform 0.3s ease-in-out;
+}
