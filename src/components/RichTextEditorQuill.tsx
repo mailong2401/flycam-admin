@@ -400,7 +400,7 @@ export default function RichTextEditorQuill({ value, onChange }: Props) {
               <Label htmlFor="youtube-url">URL YouTube</Label>
               <Input
                 id="youtube-url"
-                placeholder="https://www.youtube.com/watch?v=... hoặc https://youtu.be/..."
+                placeholder="https://www.youtube.com/watch?v=..."
                 value={youtubeUrl}
                 onChange={(e) => setYoutubeUrl(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && insertYouTubeVideo()}
@@ -408,7 +408,7 @@ export default function RichTextEditorQuill({ value, onChange }: Props) {
             </div>
           </div>
           <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setOpenVideoDialog(false)}>
+            <Button className="hover:bg-gray-800" variant="outline" onClick={() => setOpenVideoDialog(false)}>
               Hủy
             </Button>
             <Button onClick={insertYouTubeVideo} disabled={loadingVideo}>
@@ -457,7 +457,8 @@ export default function RichTextEditorQuill({ value, onChange }: Props) {
               setLinkUrl("");
               setLinkText("");
               delete window.__quillSelection;
-            }}>
+            }}
+            className="hover:bg-gray-800">
               Hủy
             </Button>
             <Button onClick={insertLink}>

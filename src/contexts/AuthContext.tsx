@@ -27,56 +27,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    // Kiểm tra session hiện tại
-    const checkSession = async () => {
-      console.log('🔍 Checking existing session...')
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        
-        if (session?.user) {
-          console.log('✅ Found existing session for:', session.user.email)
-          setUser({
-            id: session.user.id,
-            email: session.user.email!
-          })
-        } else {
-          console.log('📭 No existing session')
-          setUser(null)
-        }
-      } catch (error) {
-        console.error('❌ Error checking session:', error)
+  // Trong useEffect của AuthContext, thêm logging chi tiết hơn:
+useEffect(() => {
+  const checkSession = async () => {
+    console.log('🔍 Checking existing session...')
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('❌ Error getting session:', error)
+        return
+      }
+      
+      console.log('📊 Session details:', {
+        hasSession: !!session,
+        user: session?.user?.email,
+        expiresAt: session?.expires_at,
+        now: Date.now()
+      })
+      
+      if (session?.user) {
+        console.log('✅ Found existing session for:', session.user.email)
+        setUser({
+          id: session.user.id,
+          email: session.user.email!
+        })
+      } else {
+        console.log('📭 No existing session')
         setUser(null)
-      } finally {
-        setLoading(false)
       }
+    } catch (error) {
+      console.error('❌ Error checking session:', error)
+      setUser(null)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    checkSession()
+  checkSession()
 
-    // Lắng nghe thay đổi auth state
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 Auth event:', event)
-        
-        if (session?.user) {
-          const newUser = {
-            id: session.user.id,
-            email: session.user.email!
-          }
-          setUser(newUser)
-        } else {
-          setUser(null)
+  // Lắng nghe thay đổi auth state
+  const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    async (event, session) => {
+      console.log('🔄 Auth state changed:', {
+        event,
+        hasSession: !!session,
+        user: session?.user?.email
+      })
+      
+      if (session?.user) {
+        const newUser = {
+          id: session.user.id,
+          email: session.user.email!
         }
-        setLoading(false)
+        console.log('👤 Setting user to:', newUser.email)
+        setUser(newUser)
+      } else {
+        console.log('👤 Clearing user')
+        setUser(null)
       }
-    )
-
-    return () => {
-      console.log('🧹 Cleaning up auth listener')
-      subscription.unsubscribe()
+      setLoading(false)
     }
-  }, [])
+  )
+
+  return () => {
+    console.log('🧹 Cleaning up auth listener')
+    subscription.unsubscribe()
+  }
+}, [])
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setLoading(true)

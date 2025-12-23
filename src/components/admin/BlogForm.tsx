@@ -504,6 +504,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({
               variant="outline"
               onClick={onCancel}
               disabled={isSubmitting || uploading}
+              className='hover:bg-gray-800'
             >
               Hủy
             </Button>

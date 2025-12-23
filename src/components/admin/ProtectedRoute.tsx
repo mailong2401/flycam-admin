@@ -10,15 +10,22 @@ interface ProtectedRouteProps {
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useAuth()
   const location = useLocation()
-  const navigate = useNavigate() // THÊM HOOK NÀY
+  const navigate = useNavigate()
 
-  // Nếu đã login và đang ở trang login, tự động redirect đến dashboard
   useEffect(() => {
-    if (user && location.pathname === '/admin/login') {
-      console.log('🔄 Auto-redirecting from login to dashboard')
-      navigate('/admin/dashboard', { replace: true }) // DÙNG navigate THAY VÌ window.location
+    if (!loading && user) {
+      // Nếu đã đăng nhập và đang ở trang login, chuyển hướng đến dashboard
+      if (location.pathname === '/admin/login') {
+        console.log('🔄 User already logged in, redirecting to dashboard')
+        navigate('/admin/dashboard', { replace: true })
+      }
+      // Nếu đã đăng nhập và truy cập /admin, chuyển hướng đến dashboard
+      else if (location.pathname === '/admin') {
+        console.log('🔄 Redirecting from /admin to /admin/dashboard')
+        navigate('/admin/dashboard', { replace: true })
+      }
     }
-  }, [user, location.pathname, navigate]) // THÊM navigate VÀO DEPENDENCIES
+  }, [user, loading, location.pathname, navigate])
 
   if (loading) {
     return (
@@ -28,7 +35,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     )
   }
 
+  // Nếu chưa đăng nhập, chuyển hướng đến trang login
   if (!user) {
+    // KHÔNG redirect nếu đang ở trang login
+    if (location.pathname === '/admin/login') {
+      return <>{children}</> // Trả về AdminLogin component
+    }
     return <Navigate to="/admin/login" replace />
   }
 

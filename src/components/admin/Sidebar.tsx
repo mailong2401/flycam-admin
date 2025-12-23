@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import logo from '@/assets/logo-flycam-hitek.png'
 import { 
   FileText, 
   LogOut,
@@ -42,7 +43,7 @@ const Sidebar = () => {
 
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-background transition-transform lg:translate-x-0",
+          "fixed left-0 top-0 z-40 h-screen w-64 border-r bg-secondary transition-transform lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -52,9 +53,9 @@ const Sidebar = () => {
             className="flex items-center gap-2 font-semibold cursor-pointer hover:opacity-80 transition-opacity"
           >
             <img 
-              src="/logo_light.png" 
+              src= {logo} 
               alt="Hitek Flycam Admin" 
-              className="h-8 w-8"
+              className="h-10 w-10"
             />
             <span className="text-lg">Flycam Admin</span>
           </div>
@@ -67,7 +68,7 @@ const Sidebar = () => {
               to={item.path}
               onClick={() => setIsOpen(false)}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent",
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-vibrant-red",
                 location.pathname === item.path
                   ? "bg-accent font-medium"
                   : "text-muted-foreground"
@@ -82,7 +83,7 @@ const Sidebar = () => {
         <div className="border-t p-4">
           <Button
             variant="ghost"
-            className="w-full justify-start gap-3"
+            className="w-full justify-start gap-3 hover:bg-vibrant-red"
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4" />

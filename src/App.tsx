@@ -9,8 +9,8 @@ import ProtectedRoute from "./components/admin/ProtectedRoute";
 import AdminLogin from "./pages/admin/AdminLogin";
 import Dashboard from "./pages/admin/Dashboard";
 import BlogManagement from "./pages/admin/BlogManagement";
-import BlogNew from "./pages/admin/BlogNew"; // THÊM
-import BlogEdit from "./pages/admin/BlogEdit"; // THÊM
+import BlogNew from "./pages/admin/BlogNew";
+import BlogEdit from "./pages/admin/BlogEdit";
 
 const queryClient = new QueryClient();
 
@@ -22,8 +22,25 @@ const App = () => {
         <AuthProvider>
           <BrowserRouter>
             <Routes>
-              <Route path="/admin" element={<Navigate to="/admin/login" replace />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
+              {/* Route /admin - Protected và redirect đến dashboard */}
+              <Route 
+                path="/admin" 
+                element={
+                  <ProtectedRoute>
+                    <Navigate to="/admin/dashboard" replace />
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* Route /admin/login - CŨNG được bảo vệ bởi ProtectedRoute */}
+              <Route 
+                path="/admin/login" 
+                element={
+                  <ProtectedRoute>
+                    <AdminLogin />
+                  </ProtectedRoute>
+                } 
+              />
               
               <Route
                 path="/admin/dashboard"
@@ -43,7 +60,6 @@ const App = () => {
                 }
               />
               
-              {/* THÊM ROUTES MỚI */}
               <Route
                 path="/admin/blog/new"
                 element={

@@ -37,7 +37,7 @@ export default function BlogNew() {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/admin/dashboard')}
-                className="gap-2"
+                className="gap-2 hover:bg-gray-800"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Quay lại Dashboard
@@ -54,6 +54,7 @@ export default function BlogNew() {
                 variant="outline" 
                 onClick={handleCancel}
                 disabled={isSubmitting}
+                className='hover:bg-gray-800'
               >
                 Hủy
               </Button>

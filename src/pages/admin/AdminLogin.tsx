@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // THÊM useSearchParams
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,39 +15,42 @@ const AdminLogin = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [searchParams] = useSearchParams(); // THÊM
 
-  // AdminLogin.tsx - phần handleSubmit
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-  try {
-    const success = await login(email, password); // login trả về boolean
-    if (success) {
+    try {
+      const success = await login(email, password);
+      if (success) {
+        toast({
+          title: 'Đăng nhập thành công',
+          description: 'Chuyển hướng đến dashboard...',
+        });
+        
+        // Lấy redirect path từ URL parameter hoặc mặc định là dashboard
+        const redirectPath = searchParams.get('redirect') || '/admin/dashboard';
+        navigate(redirectPath, { replace: true });
+      } else {
+        toast({
+          title: 'Đăng nhập thất bại',
+          description: 'Email hoặc mật khẩu không đúng',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
       toast({
-        title: 'Đăng nhập thành công',
-        description: 'Chuyển hướng đến dashboard...',
-      });
-      // QUAN TRỌNG: Dùng navigate
-      navigate('/admin/dashboard', { replace: true }); 
-    } else {
-      toast({
-        title: 'Đăng nhập thất bại',
-        description: 'Email hoặc mật khẩu không đúng',
+        title: 'Lỗi',
+        description: 'Đã xảy ra lỗi khi đăng nhập',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    toast({
-      title: 'Lỗi',
-      description: 'Đã xảy ra lỗi khi đăng nhập',
-      variant: 'destructive',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  // ... rest of the component remains the same
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 p-4">
       <Card className="w-full max-w-md border shadow-lg">
