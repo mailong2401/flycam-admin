@@ -6,18 +6,19 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Upload, X, Loader2, AlertCircle, Eye } from 'lucide-react'
+import { Upload, X, Loader2, AlertCircle, Eye, Globe } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import RichTextEditor from "@/components/RichTextEditorQuill"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface BlogFormProps {
   post?: BlogPost | null
   onSuccess: () => void
-  onCancel?: () => void // THÊM PROP NÀY
-  isSubmitting?: boolean // THÊM PROP NÀY
-  setIsSubmitting?: (value: boolean) => void // THÊM PROP NÀY
+  onCancel?: () => void
+  isSubmitting?: boolean
+  setIsSubmitting?: (value: boolean) => void
 }
 
 const categories = [
@@ -31,6 +32,8 @@ const categories = [
   'Bảo trì',
 ]
 
+type Language = 'vi' | 'en'
+
 export const BlogForm: React.FC<BlogFormProps> = ({ 
   post, 
   onSuccess, 
@@ -41,40 +44,93 @@ export const BlogForm: React.FC<BlogFormProps> = ({
   const [uploading, setUploading] = useState(false)
   const [previewImage, setPreviewImage] = useState<string>(post?.image || '')
   const [error, setError] = useState<string>('')
+  const [activeLanguage, setActiveLanguage] = useState<Language>('vi')
   const [seoChecks, setSeoChecks] = useState({
-    hasTitle: false,
-    hasContent: false,
-    hasImage: false,
-    hasMetaDescription: false,
-    hasHeadings: false,
+    vi: {
+      hasTitle: false,
+      hasContent: false,
+      hasMetaDescription: false,
+      hasHeadings: false,
+    },
+    en: {
+      hasTitle: false,
+      hasContent: false,
+      hasMetaDescription: false,
+      hasHeadings: false,
+    }
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [formData, setFormData] = useState({
-    title: post?.title || '',
-    excerpt: post?.excerpt || '',
-    content: post?.content || '',
+    // Common fields
     image: post?.image || '',
     date: post?.date || new Date().toISOString().split('T')[0],
     author: post?.author || '',
     category: post?.category || categories[0],
     status: post?.status || 'draft',
+    
+    // Vietnamese fields
+    title_vi: post?.title_vi || '',
+    excerpt_vi: post?.excerpt_vi || '',
+    content_vi: post?.content_vi || '',
+    slug_vi: post?.slug_vi || '',
+    meta_title_vi: post?.meta_title_vi || '',
+    meta_description_vi: post?.meta_description_vi || '',
+    
+    // English fields
+    title_en: post?.title_en || '',
+    excerpt_en: post?.excerpt_en || '',
+    content_en: post?.content_en || '',
+    slug_en: post?.slug_en || '',
+    meta_title_en: post?.meta_title_en || '',
+    meta_description_en: post?.meta_description_en || '',
   })
+
+  // Auto-generate slugs from titles
+  useEffect(() => {
+    const createSlug = (text: string) => {
+      if (!text.trim()) return ''
+      return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .trim()
+    }
+
+    if (activeLanguage === 'vi' && !formData.slug_vi && formData.title_vi) {
+      setFormData(prev => ({ ...prev, slug_vi: createSlug(formData.title_vi) }))
+    }
+    if (activeLanguage === 'en' && !formData.slug_en && formData.title_en) {
+      setFormData(prev => ({ ...prev, slug_en: createSlug(formData.title_en) }))
+    }
+  }, [formData.title_vi, formData.title_en, activeLanguage, formData.slug_vi, formData.slug_en])
 
   // Kiểm tra SEO khi formData thay đổi
   useEffect(() => {
     checkSEO()
-  }, [formData])
+  }, [formData, activeLanguage])
 
   const checkSEO = () => {
-    const checks = {
-      hasTitle: formData.title.length > 10 && formData.title.length < 70,
-      hasContent: formData.content.length > 300,
-      hasImage: formData.image.length > 0,
-      hasMetaDescription:  (formData.excerpt.length >= 120 && formData.excerpt.length <= 160),
-      hasHeadings: /<h[1-3][^>]*>.*?<\/h[1-3]>/i.test(formData.content),
+    const checksVi = {
+      hasTitle: formData.title_vi.length > 10 && formData.title_vi.length < 70,
+      hasContent: formData.content_vi.length > 300,
+      hasMetaDescription: formData.excerpt_vi.length >= 120 && formData.excerpt_vi.length <= 160,
+      hasHeadings: /<h[1-3][^>]*>.*?<\/h[1-3]>/i.test(formData.content_vi),
     }
-    setSeoChecks(checks)
+    
+    const checksEn = {
+      hasTitle: formData.title_en.length > 10 && formData.title_en.length < 70,
+      hasContent: formData.content_en.length > 300,
+      hasMetaDescription: formData.excerpt_en.length >= 120 && formData.excerpt_en.length <= 160,
+      hasHeadings: /<h[1-3][^>]*>.*?<\/h[1-3]>/i.test(formData.content_en),
+    }
+    
+    setSeoChecks({
+      vi: checksVi,
+      en: checksEn
+    })
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,7 +171,6 @@ export const BlogForm: React.FC<BlogFormProps> = ({
 
     } catch (error: any) {
       console.error('Error uploading image:', error)
-
       if (error.message?.includes('bucket') || error.message?.includes('not found')) {
         setError('Bucket "blog-images" chưa được tạo trong Supabase.')
       } else {
@@ -134,11 +189,6 @@ export const BlogForm: React.FC<BlogFormProps> = ({
     }
   }
 
-  const handleImageUrlChange = (url: string) => {
-    setFormData(prev => ({ ...prev, image: url }))
-    setPreviewImage(url)
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -148,46 +198,43 @@ export const BlogForm: React.FC<BlogFormProps> = ({
     }
 
     try {
-      if (!formData.title.trim()) {
-        setError('Vui lòng nhập tiêu đề')
+      // Validate required fields
+      if (!formData.title_vi.trim()) {
+        setError('Vui lòng nhập tiêu đề tiếng Việt')
         return
       }
-      if (!formData.excerpt.trim()) {
-        setError('Vui lòng nhập tóm tắt')
+      if (!formData.slug_vi.trim()) {
+        setError('Vui lòng nhập slug tiếng Việt')
         return
       }
       if (!formData.image.trim()) {
         setError('Vui lòng thêm hình ảnh cho bài viết')
         return
       }
-      if (!formData.content.trim() || formData.content.trim().length < 50) {
-        setError('Vui lòng nhập nội dung chi tiết (ít nhất 50 ký tự)')
-        return
-      }
-
-      // Tạo slug từ tiêu đề cho SEO friendly URL
-      const createSlug = (text: string) => {
-        return text
-          .toLowerCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/[^\w\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .trim()
-      }
 
       const blogData: any = {
-        title: formData.title.trim(),
-        excerpt: formData.excerpt.trim(),
-        content: formData.content.trim(),
+        // Common fields
         image: formData.image,
         date: formData.date,
         author: formData.author.trim() || 'Admin',
         category: formData.category,
         status: formData.status,
-        slug: post?.slug || createSlug(formData.title),
-        meta_title: formData.title.substring(0, 60),
-        meta_description: formData.excerpt.substring(0, 160),
+        
+        // Vietnamese fields
+        title_vi: formData.title_vi.trim(),
+        excerpt_vi: formData.excerpt_vi.trim(),
+        content_vi: formData.content_vi.trim(),
+        slug_vi: formData.slug_vi.trim(),
+        meta_title_vi: formData.meta_title_vi.trim() || formData.title_vi.substring(0, 60),
+        meta_description_vi: formData.meta_description_vi.trim() || formData.excerpt_vi.substring(0, 160),
+        
+        // English fields (optional)
+        title_en: formData.title_en.trim() || null,
+        excerpt_en: formData.excerpt_en.trim() || null,
+        content_en: formData.content_en.trim() || null,
+        slug_en: formData.slug_en.trim() || null,
+        meta_title_en: formData.meta_title_en.trim() || (formData.title_en ? formData.title_en.substring(0, 60) : null),
+        meta_description_en: formData.meta_description_en.trim() || (formData.excerpt_en ? formData.excerpt_en.substring(0, 160) : null),
       }
 
       if (post?.id) {
@@ -219,25 +266,34 @@ export const BlogForm: React.FC<BlogFormProps> = ({
     }
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6" id="blog-form">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        
+  const renderLanguageFields = (lang: Language) => {
+    const titleField = lang === 'vi' ? 'title_vi' : 'title_en'
+    const excerptField = lang === 'vi' ? 'excerpt_vi' : 'excerpt_en'
+    const contentField = lang === 'vi' ? 'content_vi' : 'content_en'
+    const slugField = lang === 'vi' ? 'slug_vi' : 'slug_en'
+    const metaTitleField = lang === 'vi' ? 'meta_title_vi' : 'meta_title_en'
+    const metaDescField = lang === 'vi' ? 'meta_description_vi' : 'meta_description_en'
+    
+    const currentSeoChecks = seoChecks[lang]
+    const langLabel = lang === 'vi' ? 'Tiếng Việt' : 'English'
+
+    return (
+      <div className="space-y-6">
         {/* Tiêu đề */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="title">Tiêu đề *</Label>
-            <Badge variant={seoChecks.hasTitle ? "default" : "outline"} className="text-xs">
-              {formData.title.length}/70
+            <Label htmlFor={titleField}>Tiêu đề {langLabel} *</Label>
+            <Badge variant={currentSeoChecks.hasTitle ? "default" : "outline"} className="text-xs">
+              {formData[titleField].length}/70
             </Badge>
           </div>
           <Input
-            id="title"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            required
+            id={titleField}
+            value={formData[titleField]}
+            onChange={(e) => setFormData({ ...formData, [titleField]: e.target.value })}
+            required={lang === 'vi'}
             disabled={isSubmitting || uploading}
-            placeholder="Tiêu đề hấp dẫn, chứa từ khóa chính..."
+            placeholder={lang === 'vi' ? "Tiêu đề hấp dẫn, chứa từ khóa chính..." : "Attractive title, contains main keywords..."}
             maxLength={70}
             className="placeholder:text-gray-400"
           />
@@ -246,24 +302,126 @@ export const BlogForm: React.FC<BlogFormProps> = ({
           </p>
         </div>
 
-        {/* Danh mục */}
+        {/* Slug */}
         <div className="space-y-2">
-          <Label htmlFor="category" className="text-gray-900 dark:text-white">
-            Danh mục *
-          </Label>
-          <select
-            id="category"
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <Label htmlFor={slugField}>URL Slug {langLabel} *</Label>
+          <Input
+            id={slugField}
+            value={formData[slugField]}
+            onChange={(e) => setFormData({ ...formData, [slugField]: e.target.value })}
+            required={lang === 'vi'}
             disabled={isSubmitting || uploading}
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat} className="text-gray-900">{cat}</option>
-            ))}
-          </select>
+            placeholder="url-seo-friendly"
+          />
+          <p className="text-xs text-gray-500">
+            Đường dẫn SEO, không dấu, cách nhau bằng dấu gạch ngang. Ví dụ: bai-viet-seo
+          </p>
         </div>
 
+        {/* Meta Title */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor={metaTitleField}>Meta Title {langLabel}</Label>
+            <Badge className="text-xs">
+              {formData[metaTitleField].length}/60
+            </Badge>
+          </div>
+          <Input
+            id={metaTitleField}
+            value={formData[metaTitleField]}
+            onChange={(e) => setFormData({ ...formData, [metaTitleField]: e.target.value })}
+            disabled={isSubmitting || uploading}
+            placeholder="Tiêu đề hiển thị trên tab trình duyệt..."
+            maxLength={60}
+          />
+          <p className="text-xs text-gray-500">
+            Nếu để trống sẽ tự động lấy từ tiêu đề bài viết
+          </p>
+        </div>
+
+        {/* Tóm tắt (Meta Description) */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor={excerptField}>Tóm tắt (Meta Description) {langLabel} {lang === 'vi' && '*'}</Label>
+            <Badge 
+              variant={
+                formData[excerptField].length === 0 ? "outline" : 
+                (formData[excerptField].length >= 120 && formData[excerptField].length <= 160) ? "default" : "destructive"
+              } 
+              className="text-xs"
+            >
+              {formData[excerptField].length === 0 ? "Chưa nhập" : 
+              formData[excerptField].length < 120 ? `Thiếu ${120 - formData[excerptField].length} ký tự` :
+              formData[excerptField].length > 160 ? `Dư ${formData[excerptField].length - 160} ký tự` :
+              "✅ Tối ưu"}
+            </Badge>
+          </div>
+          <Textarea
+            id={excerptField}
+            value={formData[excerptField]}
+            onChange={(e) => setFormData({ ...formData, [excerptField]: e.target.value })}
+            rows={3}
+            required={lang === 'vi'}
+            disabled={isSubmitting || uploading}
+            placeholder={lang === 'vi' 
+              ? "Mô tả ngắn gọn về bài viết. Đoạn này sẽ hiển thị trên kết quả tìm kiếm Google..."
+              : "Brief description of the article. This will appear in Google search results..."
+            }
+            maxLength={160}
+            className="placeholder:text-gray-400"
+          />
+          <div className="text-xs text-gray-500 space-y-1">
+            <p>Đây là <strong>meta description</strong> hiển thị trên Google.</p>
+            <p>Tối ưu: 120-160 ký tự, chứa từ khóa chính, kêu gọi hành động.</p>
+          </div>
+        </div>
+
+        {/* Meta Description */}
+        <div className="space-y-2">
+          <Label htmlFor={metaDescField}>Meta Description {langLabel}</Label>
+          <Textarea
+            id={metaDescField}
+            value={formData[metaDescField]}
+            onChange={(e) => setFormData({ ...formData, [metaDescField]: e.target.value })}
+            rows={2}
+            disabled={isSubmitting || uploading}
+            placeholder="Mô tả chi tiết cho SEO..."
+            maxLength={320}
+          />
+          <p className="text-xs text-gray-500">
+            Nếu để trống sẽ tự động lấy từ tóm tắt bài viết
+          </p>
+        </div>
+
+        {/* Nội dung chính với RichTextEditor */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor={contentField}>Nội dung chi tiết {langLabel} {lang === 'vi' && '*'}</Label>
+            <div className="flex gap-2">
+              <Badge 
+                variant={currentSeoChecks.hasHeadings ? "default" : "outline"} 
+                className="text-xs"
+              >
+                {currentSeoChecks.hasHeadings ? "✓ Có heading" : "Chưa có heading"}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="border border-gray-300 rounded-lg overflow-hidden">
+            <RichTextEditor
+              value={formData[contentField]}
+              onChange={(html) => setFormData({ ...formData, [contentField]: html })}
+            />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6" id="blog-form">
+      {/* Phần chung */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tác giả */}
         <div className="space-y-2">
           <Label htmlFor="author">Tác giả *</Label>
@@ -290,6 +448,24 @@ export const BlogForm: React.FC<BlogFormProps> = ({
           />
         </div>
 
+        {/* Danh mục */}
+        <div className="space-y-2">
+          <Label htmlFor="category" className="text-gray-900 dark:text-white">
+            Danh mục *
+          </Label>
+          <select
+            id="category"
+            value={formData.category}
+            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            className="flex h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting || uploading}
+          >
+            {categories.map((cat) => (
+              <option key={cat} value={cat} className="text-gray-900">{cat}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Trạng thái */}
         <div className="space-y-2">
           <Label htmlFor="status" className="text-gray-900 dark:text-white">
@@ -311,8 +487,8 @@ export const BlogForm: React.FC<BlogFormProps> = ({
         <div className="md:col-span-2 space-y-2">
           <div className="flex items-center justify-between">
             <Label>Hình ảnh chính *</Label>
-            <Badge variant={seoChecks.hasImage ? "default" : "outline"} className="text-xs">
-              {seoChecks.hasImage ? "✓ Có ảnh" : "Chưa có ảnh"}
+            <Badge variant={formData.image ? "default" : "outline"} className="text-xs">
+              {formData.image ? "✓ Có ảnh" : "Chưa có ảnh"}
             </Badge>
           </div>
           
@@ -352,13 +528,11 @@ export const BlogForm: React.FC<BlogFormProps> = ({
           <div className="flex flex-col gap-4">
             <div className="flex gap-2">
               <Input
-                value={formData.image.startsWith('http') && !formData.image.includes('supabase.co/storage')
-                  ? formData.image
-                  : ''}
-                onChange={(e) => handleImageUrlChange(e.target.value)}
+                value={formData.image}
+                onChange={(e) => setFormData({ ...formData, image: e.target.value })}
                 placeholder="Nhập URL ảnh từ internet (https://...)"
                 disabled={isSubmitting || uploading}
-                className='placeholder:text-gray-400'
+                className='placeholder:text-gray-400 flex-1'
               />
               <span className="text-sm text-gray-500 self-center">hoặc</span>
               <input
@@ -386,92 +560,55 @@ export const BlogForm: React.FC<BlogFormProps> = ({
             </div>
           </div>
         </div>
-
-        {/* Tóm tắt (Meta Description) */}
-        <div className="md:col-span-2 space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="excerpt">Tóm tắt (Meta Description) *</Label>
-            <Badge 
-              variant={
-                formData.excerpt.length === 0 ? "outline" : 
-                (formData.excerpt.length >= 120 && formData.excerpt.length <= 160) ? "default" : "destructive"
-              } 
-              className={`
-                text-xs
-                ${formData.excerpt.length >= 120 && formData.excerpt.length <= 160 ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}
-              `}
-            >
-              {formData.excerpt.length === 0 ? "Chưa nhập" : 
-              formData.excerpt.length < 120 ? `Thiếu ${120 - formData.excerpt.length} ký tự` :
-              formData.excerpt.length > 160 ? `Dư ${formData.excerpt.length - 160} ký tự` :
-              "✅ Tối ưu"}
-            </Badge>
-          </div>
-          <Textarea
-            id="excerpt"
-            value={formData.excerpt}
-            onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
-            rows={3}
-            required
-            disabled={isSubmitting || uploading}
-            placeholder="Mô tả ngắn gọn về bài viết. Đoạn này sẽ hiển thị trên kết quả tìm kiếm Google..."
-            maxLength={160}
-            className="placeholder:text-gray-400"
-          />
-          <div className="text-xs text-gray-500 space-y-1">
-            <p>Đây là <strong>meta description</strong> hiển thị trên Google.</p>
-            <p>Tối ưu: 120-160 ký tự, chứa từ khóa chính, kêu gọi hành động.</p>
-          </div>
-        </div>
-
-        <Separator className="md:col-span-2" />
-
-        {/* Nội dung chính với RichTextEditor */}
-        <div className="md:col-span-2 space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor="content" className="text-gray-900 dark:text-white">
-              Nội dung chi tiết *
-            </Label>
-            <div className="flex gap-2">
-              <Badge 
-                variant={seoChecks.hasHeadings ? "default" : "outline"} 
-                className={`
-                  text-xs
-                  ${seoChecks.hasHeadings ? 'bg-green-100 text-green-800 hover:bg-green-100' : ''}
-                `}
-              >
-                {seoChecks.hasHeadings ? "✓ Có heading" : "Chưa có heading"}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Hidden input cho form validation */}
-          <input
-            type="hidden"
-            id="content"
-            name="content"
-            value={formData.content}
-            required
-          />
-
-          {/* RichTextEditor */}
-          <div className="border border-gray-300 rounded-lg overflow-hidden">
-            <RichTextEditor
-              value={formData.content}
-              onChange={(html) => setFormData({ ...formData, content: html })}
-            />
-          </div>
-        </div>
-
       </div>
 
-      {/* Tóm tắt SEO Score */}
+      <Separator />
+
+      {/* Phần ngôn ngữ với tabs */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <Globe className="w-5 h-5" />
+            Nội dung đa ngôn ngữ
+          </h3>
+          <div className="text-sm text-gray-500">
+            <span className="font-medium">Lưu ý:</span> Tiếng Việt là bắt buộc, tiếng Anh có thể để trống
+          </div>
+        </div>
+
+        <Tabs value={activeLanguage} onValueChange={(value) => setActiveLanguage(value as Language)}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="vi" className="flex items-center gap-2">
+              🇻🇳 Tiếng Việt
+              {!formData.title_vi && (
+                <span className="text-xs text-red-500">(Bắt buộc)</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="en" className="flex items-center gap-2">
+              🇺🇸 English
+              {!formData.title_en && (
+                <span className="text-xs text-gray-500">(Tùy chọn)</span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="vi" className="space-y-6 mt-6">
+            {renderLanguageFields('vi')}
+          </TabsContent>
+          
+          <TabsContent value="en" className="space-y-6 mt-6">
+            {renderLanguageFields('en')}
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Tóm tắt SEO Score cho ngôn ngữ đang chọn */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-medium text-blue-800 mb-2 flex items-center gap-2">
-          📊 Điểm SEO ước tính
+          📊 Điểm SEO ước tính ({activeLanguage === 'vi' ? 'Tiếng Việt' : 'English'})
         </h4>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          {Object.entries(seoChecks).map(([key, value]) => (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Object.entries(seoChecks[activeLanguage]).map(([key, value]) => (
             <div key={key} className="flex items-center gap-2">
               <div className={`h-3 w-3 rounded-full ${value ? 'bg-green-500' : 'bg-gray-300'}`} />
               <span className="text-sm text-blue-700 capitalize">
@@ -487,6 +624,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({
 
       {error && (
         <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
@@ -494,7 +632,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({
       {/* Action Buttons */}
       <div className="flex justify-between items-center pt-4 border-t">
         <div className="text-sm text-gray-500">
-          <p>💡 <strong>Lưu ý:</strong> Nội dung HTML từ editor đã đầy đủ SEO.</p>
+          <p>💡 <strong>Lưu ý:</strong> Tiếng Việt là bắt buộc để bài viết hiển thị trên website.</p>
         </div>
         
         <div className="flex space-x-3">
