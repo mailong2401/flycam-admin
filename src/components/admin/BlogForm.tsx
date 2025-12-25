@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Upload, X, Loader2, AlertCircle, Eye, Globe } from 'lucide-react'
+import { Upload, X, Loader2, AlertCircle, Eye, Globe, Languages } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import RichTextEditor from "@/components/RichTextEditorQuill"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { translateText } from "@/services/openai.service"
+import { toast } from "sonner"
 
 interface BlogFormProps {
   post?: BlogPost | null
@@ -45,6 +47,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({
   const [previewImage, setPreviewImage] = useState<string>(post?.image || '')
   const [error, setError] = useState<string>('')
   const [activeLanguage, setActiveLanguage] = useState<Language>('vi')
+  const [isTranslating, setIsTranslating] = useState(false)
   const [seoChecks, setSeoChecks] = useState({
     vi: {
       hasTitle: false,
@@ -119,18 +122,105 @@ export const BlogForm: React.FC<BlogFormProps> = ({
       hasMetaDescription: formData.excerpt_vi.length >= 120 && formData.excerpt_vi.length <= 160,
       hasHeadings: /<h[1-3][^>]*>.*?<\/h[1-3]>/i.test(formData.content_vi),
     }
-    
+
     const checksEn = {
       hasTitle: formData.title_en.length > 10 && formData.title_en.length < 70,
       hasContent: formData.content_en.length > 300,
       hasMetaDescription: formData.excerpt_en.length >= 120 && formData.excerpt_en.length <= 160,
       hasHeadings: /<h[1-3][^>]*>.*?<\/h[1-3]>/i.test(formData.content_en),
     }
-    
+
     setSeoChecks({
       vi: checksVi,
       en: checksEn
     })
+  }
+
+  const handleAutoTranslate = async () => {
+    // Kiểm tra xem có nội dung tiếng Việt không
+    if (!formData.title_vi.trim() && !formData.content_vi.trim() && !formData.excerpt_vi.trim()) {
+      toast.error('Vui lòng nhập nội dung tiếng Việt trước khi dịch')
+      return
+    }
+
+    setIsTranslating(true)
+    setError('')
+
+    try {
+      toast.info('Đang dịch nội dung sang tiếng Anh...', { duration: 2000 })
+
+      const translatedData: any = {}
+
+      // Dịch các trường có nội dung
+      if (formData.title_vi.trim()) {
+        translatedData.title_en = await translateText({
+          text: formData.title_vi,
+          fromLang: 'Vietnamese',
+          toLang: 'English'
+        })
+      }
+
+      if (formData.excerpt_vi.trim()) {
+        translatedData.excerpt_en = await translateText({
+          text: formData.excerpt_vi,
+          fromLang: 'Vietnamese',
+          toLang: 'English'
+        })
+      }
+
+      if (formData.content_vi.trim()) {
+        translatedData.content_en = await translateText({
+          text: formData.content_vi,
+          fromLang: 'Vietnamese',
+          toLang: 'English'
+        })
+      }
+
+      if (formData.meta_title_vi.trim()) {
+        translatedData.meta_title_en = await translateText({
+          text: formData.meta_title_vi,
+          fromLang: 'Vietnamese',
+          toLang: 'English'
+        })
+      }
+
+      if (formData.meta_description_vi.trim()) {
+        translatedData.meta_description_en = await translateText({
+          text: formData.meta_description_vi,
+          fromLang: 'Vietnamese',
+          toLang: 'English'
+        })
+      }
+
+      // Tự động tạo slug từ title đã dịch
+      if (translatedData.title_en) {
+        const createSlug = (text: string) => {
+          return text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^\w\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .trim()
+        }
+        translatedData.slug_en = createSlug(translatedData.title_en)
+      }
+
+      // Cập nhật formData
+      setFormData(prev => ({
+        ...prev,
+        ...translatedData
+      }))
+
+      toast.success('Dịch thành công! Vui lòng kiểm tra và chỉnh sửa nếu cần.')
+      setActiveLanguage('en') // Chuyển sang tab tiếng Anh để xem kết quả
+    } catch (error: any) {
+      console.error('Translation error:', error)
+      setError(error.message || 'Có lỗi khi dịch nội dung. Vui lòng thử lại.')
+      toast.error('Có lỗi khi dịch nội dung')
+    } finally {
+      setIsTranslating(false)
+    }
   }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -571,8 +661,29 @@ export const BlogForm: React.FC<BlogFormProps> = ({
             <Globe className="w-5 h-5" />
             Nội dung đa ngôn ngữ
           </h3>
-          <div className="text-sm text-gray-500">
-            <span className="font-medium">Lưu ý:</span> Tiếng Việt là bắt buộc, tiếng Anh có thể để trống
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleAutoTranslate}
+              disabled={isTranslating || isSubmitting || uploading}
+              className="flex items-center gap-2"
+            >
+              {isTranslating ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Đang dịch...
+                </>
+              ) : (
+                <>
+                  <Languages className="w-4 h-4" />
+                  Dịch sang tiếng Anh (AI)
+                </>
+              )}
+            </Button>
+            <div className="text-sm text-gray-500">
+              <span className="font-medium">Lưu ý:</span> Tiếng Việt là bắt buộc
+            </div>
           </div>
         </div>
 
