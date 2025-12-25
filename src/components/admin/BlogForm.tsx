@@ -12,7 +12,7 @@ import RichTextEditor from "@/components/RichTextEditorQuill"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { translateText } from "@/services/openai.service"
+import { translateBulk } from "@/services/openai.service"
 import { toast } from "sonner"
 
 interface BlogFormProps {
@@ -147,50 +147,25 @@ export const BlogForm: React.FC<BlogFormProps> = ({
     setError('')
 
     try {
-      toast.info('Đang dịch nội dung sang tiếng Anh...', { duration: 2000 })
+      toast.info('Đang dịch toàn bộ nội dung sang tiếng Anh...', { duration: 2000 })
 
-      const translatedData: any = {}
+      // Chuẩn bị dữ liệu cần dịch
+      const textsToTranslate: Record<string, string> = {}
 
-      // Dịch các trường có nội dung
       if (formData.title_vi.trim()) {
-        translatedData.title_en = await translateText({
-          text: formData.title_vi,
-          fromLang: 'Vietnamese',
-          toLang: 'English'
-        })
+        textsToTranslate.title_en = formData.title_vi
       }
 
       if (formData.excerpt_vi.trim()) {
-        translatedData.excerpt_en = await translateText({
-          text: formData.excerpt_vi,
-          fromLang: 'Vietnamese',
-          toLang: 'English'
-        })
+        textsToTranslate.excerpt_en = formData.excerpt_vi
       }
 
       if (formData.content_vi.trim()) {
-        translatedData.content_en = await translateText({
-          text: formData.content_vi,
-          fromLang: 'Vietnamese',
-          toLang: 'English'
-        })
+        textsToTranslate.content_en = formData.content_vi
       }
 
-      if (formData.meta_title_vi.trim()) {
-        translatedData.meta_title_en = await translateText({
-          text: formData.meta_title_vi,
-          fromLang: 'Vietnamese',
-          toLang: 'English'
-        })
-      }
-
-      if (formData.meta_description_vi.trim()) {
-        translatedData.meta_description_en = await translateText({
-          text: formData.meta_description_vi,
-          fromLang: 'Vietnamese',
-          toLang: 'English'
-        })
-      }
+      // Gọi API 1 lần duy nhất để dịch toàn bộ
+      const translatedData = await translateBulk(textsToTranslate, 'Vietnamese', 'English')
 
       // Tự động tạo slug từ title đã dịch
       if (translatedData.title_en) {
@@ -206,13 +181,23 @@ export const BlogForm: React.FC<BlogFormProps> = ({
         translatedData.slug_en = createSlug(translatedData.title_en)
       }
 
+      // Tự động tạo meta_title_en từ title_en
+      if (translatedData.title_en) {
+        translatedData.meta_title_en = translatedData.title_en.substring(0, 60)
+      }
+
+      // Tự động tạo meta_description_en từ excerpt_en
+      if (translatedData.excerpt_en) {
+        translatedData.meta_description_en = translatedData.excerpt_en.substring(0, 160)
+      }
+
       // Cập nhật formData
       setFormData(prev => ({
         ...prev,
         ...translatedData
       }))
 
-      toast.success('Dịch thành công! Vui lòng kiểm tra và chỉnh sửa nếu cần.')
+      toast.success('✅ Dịch thành công! Đã tự động tạo SEO meta tags.')
       setActiveLanguage('en') // Chuyển sang tab tiếng Anh để xem kết quả
     } catch (error: any) {
       console.error('Translation error:', error)
@@ -360,10 +345,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({
     const titleField = lang === 'vi' ? 'title_vi' : 'title_en'
     const excerptField = lang === 'vi' ? 'excerpt_vi' : 'excerpt_en'
     const contentField = lang === 'vi' ? 'content_vi' : 'content_en'
-    const slugField = lang === 'vi' ? 'slug_vi' : 'slug_en'
-    const metaTitleField = lang === 'vi' ? 'meta_title_vi' : 'meta_title_en'
-    const metaDescField = lang === 'vi' ? 'meta_description_vi' : 'meta_description_en'
-    
+
     const currentSeoChecks = seoChecks[lang]
     const langLabel = lang === 'vi' ? 'Tiếng Việt' : 'English'
 
@@ -392,55 +374,18 @@ export const BlogForm: React.FC<BlogFormProps> = ({
           </p>
         </div>
 
-        {/* Slug */}
-        <div className="space-y-2">
-          <Label htmlFor={slugField}>URL Slug {langLabel} *</Label>
-          <Input
-            id={slugField}
-            value={formData[slugField]}
-            onChange={(e) => setFormData({ ...formData, [slugField]: e.target.value })}
-            required={lang === 'vi'}
-            disabled={isSubmitting || uploading}
-            placeholder="url-seo-friendly"
-          />
-          <p className="text-xs text-gray-500">
-            Đường dẫn SEO, không dấu, cách nhau bằng dấu gạch ngang. Ví dụ: bai-viet-seo
-          </p>
-        </div>
-
-        {/* Meta Title */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label htmlFor={metaTitleField}>Meta Title {langLabel}</Label>
-            <Badge className="text-xs">
-              {formData[metaTitleField].length}/60
-            </Badge>
-          </div>
-          <Input
-            id={metaTitleField}
-            value={formData[metaTitleField]}
-            onChange={(e) => setFormData({ ...formData, [metaTitleField]: e.target.value })}
-            disabled={isSubmitting || uploading}
-            placeholder="Tiêu đề hiển thị trên tab trình duyệt..."
-            maxLength={60}
-          />
-          <p className="text-xs text-gray-500">
-            Nếu để trống sẽ tự động lấy từ tiêu đề bài viết
-          </p>
-        </div>
-
         {/* Tóm tắt (Meta Description) */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor={excerptField}>Tóm tắt (Meta Description) {langLabel} {lang === 'vi' && '*'}</Label>
-            <Badge 
+            <Badge
               variant={
-                formData[excerptField].length === 0 ? "outline" : 
+                formData[excerptField].length === 0 ? "outline" :
                 (formData[excerptField].length >= 120 && formData[excerptField].length <= 160) ? "default" : "destructive"
-              } 
+              }
               className="text-xs"
             >
-              {formData[excerptField].length === 0 ? "Chưa nhập" : 
+              {formData[excerptField].length === 0 ? "Chưa nhập" :
               formData[excerptField].length < 120 ? `Thiếu ${120 - formData[excerptField].length} ký tự` :
               formData[excerptField].length > 160 ? `Dư ${formData[excerptField].length - 160} ký tự` :
               "✅ Tối ưu"}
@@ -453,7 +398,7 @@ export const BlogForm: React.FC<BlogFormProps> = ({
             rows={3}
             required={lang === 'vi'}
             disabled={isSubmitting || uploading}
-            placeholder={lang === 'vi' 
+            placeholder={lang === 'vi'
               ? "Mô tả ngắn gọn về bài viết. Đoạn này sẽ hiển thị trên kết quả tìm kiếm Google..."
               : "Brief description of the article. This will appear in Google search results..."
             }
@@ -466,30 +411,13 @@ export const BlogForm: React.FC<BlogFormProps> = ({
           </div>
         </div>
 
-        {/* Meta Description */}
-        <div className="space-y-2">
-          <Label htmlFor={metaDescField}>Meta Description {langLabel}</Label>
-          <Textarea
-            id={metaDescField}
-            value={formData[metaDescField]}
-            onChange={(e) => setFormData({ ...formData, [metaDescField]: e.target.value })}
-            rows={2}
-            disabled={isSubmitting || uploading}
-            placeholder="Mô tả chi tiết cho SEO..."
-            maxLength={320}
-          />
-          <p className="text-xs text-gray-500">
-            Nếu để trống sẽ tự động lấy từ tóm tắt bài viết
-          </p>
-        </div>
-
         {/* Nội dung chính với RichTextEditor */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor={contentField}>Nội dung chi tiết {langLabel} {lang === 'vi' && '*'}</Label>
             <div className="flex gap-2">
-              <Badge 
-                variant={currentSeoChecks.hasHeadings ? "default" : "outline"} 
+              <Badge
+                variant={currentSeoChecks.hasHeadings ? "default" : "outline"}
                 className="text-xs"
               >
                 {currentSeoChecks.hasHeadings ? "✓ Có heading" : "Chưa có heading"}
@@ -503,6 +431,13 @@ export const BlogForm: React.FC<BlogFormProps> = ({
               onChange={(html) => setFormData({ ...formData, [contentField]: html })}
             />
           </div>
+        </div>
+
+        {/* Thông tin tự động tạo */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <p className="text-xs text-gray-600">
+            ℹ️ <strong>Tự động tạo:</strong> URL Slug, Meta Title, Meta Description sẽ được tạo tự động từ tiêu đề và tóm tắt.
+          </p>
         </div>
       </div>
     )
